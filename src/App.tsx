@@ -1,5 +1,5 @@
 // Importaciones necesarias
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Cake, History } from 'lucide-react';
 import { ProductList } from './components/ProductList';
 import { Cart } from './components/Cart';
