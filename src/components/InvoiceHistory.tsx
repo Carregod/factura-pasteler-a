@@ -3,8 +3,8 @@ import { format } from 'date-fns';
 import { MessageSquare, Eye, Edit2, XCircle, CheckCircle } from 'lucide-react';
 import { getInvoices, updateInvoiceStatus } from '../services/api';
 import { Invoice } from '../types'; 
-import { InvoiceView } from './invoiceView.tsx';
-import { InvoiceEdit } from './InvoiceEdit.tsx';
+import { InvoiceView } from './invoiceView';
+import { InvoiceEdit } from './InvoiceEdit';
 
 export const InvoiceHistory: React.FC = () => {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
