@@ -6,6 +6,7 @@ export interface Product {
   image: string;
 }
 
+
 export type InvoiceStatus = 'pending' | 'partial' | 'completed' | 'cancelled';
 
 export interface InvoiceItem {
@@ -23,8 +24,8 @@ export interface Invoice {
   status: InvoiceStatus;
   partialPayment?: number;
   cancellationReason?: string;
-  lastModified?: Date;
   comment?: string;
+  lastModified?: Date;
 }
 
 export interface SearchFilters {

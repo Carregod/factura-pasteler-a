@@ -1,17 +1,19 @@
 import React, { useEffect, useState } from 'react';
 import { format } from 'date-fns';
-import { Edit2, FileText, XCircle, File } from 'lucide-react';
+import { MessageSquare, Eye, Edit2, XCircle, CheckCircle } from 'lucide-react';
 import { getInvoices, updateInvoiceStatus } from '../services/api';
-import { Invoice as InvoiceType, InvoiceStatus } from '../types';
-import { Invoice } from './Invoice';
+import { Invoice } from '../types'; 
+import { InvoiceView } from './invoiceView.tsx';
+import { InvoiceEdit } from './InvoiceEdit.tsx';
 
 export const InvoiceHistory: React.FC = () => {
-  const [invoices, setInvoices] = useState<InvoiceType[]>([]);
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedInvoice, setSelectedInvoice] = useState<InvoiceType | null>(null);
-  const [showInvoiceModal, setShowInvoiceModal] = useState(false);
+  const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   const [cancellationReason, setCancellationReason] = useState('');
-  const [showCancellationModal, setShowCancellationModal] = useState(false);
 
   useEffect(() => {
     fetchInvoices();
@@ -28,64 +30,81 @@ export const InvoiceHistory: React.FC = () => {
     }
   };
 
-  const handleStatusChange = async (invoice: InvoiceType, status: InvoiceStatus) => {
-    try {
-      if (status === 'cancelled') {
-        setSelectedInvoice(invoice);
-        setShowCancellationModal(true);
-        return;
-      }
-
-      await updateInvoiceStatus(invoice.id, status);
-      await fetchInvoices();
-    } catch (error) {
-      console.error('Error updating invoice status:', error);
-      alert('Error al actualizar el estado de la factura');
-    }
+  const handleViewInvoice = (invoice: Invoice) => {
+    setSelectedInvoice(invoice);
+    setIsViewModalOpen(true);
   };
 
-  const handleCancelInvoice = async () => {
-    if (!selectedInvoice || !cancellationReason) return;
+  const handleEditInvoice = (invoice: Invoice) => {
+    setSelectedInvoice(invoice);
+    setIsEditModalOpen(true);
+  };
+
+  const handleCancelInvoice = (invoice: Invoice) => {
+    setSelectedInvoice(invoice);
+    setIsCancelModalOpen(true);
+  };
+
+  const handleConfirmCancel = async () => {
+    if (!selectedInvoice || !cancellationReason.trim()) {
+      alert('Por favor ingrese un motivo de cancelación');
+      return;
+    }
 
     try {
-      await updateInvoiceStatus(selectedInvoice.id, 'cancelled', { cancellationReason });
-      resetModals();
+      await updateInvoiceStatus(selectedInvoice.id, 'cancelled', {
+        cancellationReason,
+      });
       await fetchInvoices();
+      setIsCancelModalOpen(false);
+      setCancellationReason('');
+      setSelectedInvoice(null);
     } catch (error) {
       console.error('Error cancelling invoice:', error);
       alert('Error al cancelar la factura');
     }
   };
 
-  const resetModals = () => {
-    setShowCancellationModal(false);
-    setCancellationReason('');
-    setSelectedInvoice(null);
+  const handleCompleteInvoice = async (invoice: Invoice) => {
+    try {
+      await updateInvoiceStatus(invoice.id, 'completed');
+      await fetchInvoices();
+    } catch (error) {
+      console.error('Error completing invoice:', error);
+      alert('Error al finalizar la factura');
+    }
   };
 
-  const getStatusBadgeClass = (status: InvoiceStatus) => {
-    const baseClasses = 'px-2 py-1 rounded-full text-xs font-medium';
-    const statusClasses = {
+  const getStatusBadge = (status: string) => {
+    const badges = {
       pending: 'bg-yellow-100 text-yellow-800',
       partial: 'bg-blue-100 text-blue-800',
       completed: 'bg-green-100 text-green-800',
-      cancelled: 'bg-red-100 text-red-800'
+      cancelled: 'bg-red-100 text-red-800',
     };
-    return `${baseClasses} ${statusClasses[status] || ''}`;
-  };
-
-  const renderStatusText = (status: InvoiceStatus) => {
-    const statusTexts = {
+    const statusText = {
       pending: 'En Espera',
       partial: 'Abonado',
       completed: 'Completado',
-      cancelled: 'Cancelado'
+      cancelled: 'Cancelado',
     };
-    return statusTexts[status];
+    return (
+      <span
+        className={`px-2 py-1 rounded-full text-xs font-medium ${
+          badges[status as keyof typeof badges]
+        }`}
+      >
+        {statusText[status as keyof typeof statusText]}
+      </span>
+    );
   };
 
   if (loading) {
-    return <div className="bg-white p-6 rounded-lg shadow-md">Cargando facturas...</div>;
+    return (
+      <div className="bg-white p-6 rounded-lg shadow-md">
+        <p>Cargando facturas...</p>
+      </div>
+    );
   }
 
   return (
@@ -99,8 +118,9 @@ export const InvoiceHistory: React.FC = () => {
               <th className="text-left py-2">Cliente</th>
               <th className="text-left py-2">Fecha</th>
               <th className="text-right py-2">Total</th>
-              <th className="text-center py-2">Estado</th>
-              <th className="text-left py-2">Motivo de Cancelación</th>
+              <th className="text-left py-2">Estado</th>
+              <th className="text-left py-2">Comentario</th>
+              <th className="text-left py-2">Motivo Cancelación</th>
               <th className="text-center py-2">Acciones</th>
             </tr>
           </thead>
@@ -109,55 +129,64 @@ export const InvoiceHistory: React.FC = () => {
               <tr key={invoice.id} className="border-b hover:bg-gray-50">
                 <td className="py-2">{invoice.id}</td>
                 <td className="py-2">{invoice.customerName}</td>
-                <td className="py-2">{format(new Date(invoice.date), 'dd/MM/yyyy HH:mm')}</td>
-                <td className="py-2 text-right">${invoice.total.toFixed(2)}</td>
-                <td className="py-2 text-center">
-                  <span className={getStatusBadgeClass(invoice.status)}>
-                    {renderStatusText(invoice.status)}
-                  </span>
+                <td className="py-2">
+                  {format(new Date(invoice.date), 'dd/MM/yyyy HH:mm')}
                 </td>
-                <td className="py-2 text-left">
-                  {invoice.status === 'cancelled' 
-                    ? invoice.cancellationReason || 'No especificado' 
-                    : 'N/A'}
+                <td className="py-2 text-right">Q{invoice.total.toFixed(2)}</td>
+                <td className="py-2">
+                  {getStatusBadge(invoice.status)}
+                </td>
+                <td className="py-2">
+                  {invoice.comment && (
+                    <div className="flex items-center gap-1">
+                      <MessageSquare size={16} className="text-gray-500" />
+                      <span className="text-sm text-gray-600 truncate max-w-[200px]">
+                        {invoice.comment}
+                      </span>
+                    </div>
+                  )}
+                </td>
+                <td className="py-2">
+                  {invoice.cancellationReason && (
+                    <span className="text-sm text-red-600 truncate max-w-[200px]">
+                      {invoice.cancellationReason}
+                    </span>
+                  )}
                 </td>
                 <td className="py-2">
                   <div className="flex justify-center gap-2">
-                    {invoice.status !== 'completed' && invoice.status !== 'cancelled' && (
+                    <button
+                      onClick={() => handleViewInvoice(invoice)}
+                      className="p-1 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded"
+                      title="Ver Factura"
+                    >
+                      <Eye size={18} />
+                    </button>
+                    {['pending', 'partial'].includes(invoice.status) && (
                       <>
                         <button
-                          onClick={() => handleStatusChange(invoice, 'completed')}
-                          className="p-1 text-green-500 hover:bg-green-50 rounded"
-                          title="Generar Factura"
+                          onClick={() => handleEditInvoice(invoice)}
+                          className="p-1 text-blue-600 hover:text-blue-900 hover:bg-blue-100 rounded"
+                          title="Editar Factura"
                         >
-                          <FileText size={16} />
+                          <Edit2 size={18} />
                         </button>
                         <button
-                          onClick={() => setSelectedInvoice(invoice)}
-                          className="p-1 text-blue-500 hover:bg-blue-50 rounded"
-                          title="Editar"
+                          onClick={() => handleCompleteInvoice(invoice)}
+                          className="p-1 text-green-600 hover:text-green-900 hover:bg-green-100 rounded"
+                          title="Finalizar Factura"
                         >
-                          <Edit2 size={16} />
+                          <CheckCircle size={18} />
                         </button>
                         <button
-                          onClick={() => handleStatusChange(invoice, 'cancelled')}
-                          className="p-1 text-red-500 hover:bg-red-50 rounded"
-                          title="Cancelar"
+                          onClick={() => handleCancelInvoice(invoice)}
+                          className="p-1 text-red-600 hover:text-red-900 hover:bg-red-100 rounded"
+                          title="Cancelar Factura"
                         >
-                          <XCircle size={16} />
+                          <XCircle size={18} />
                         </button>
                       </>
                     )}
-                    <button
-                      onClick={() => {
-                        setSelectedInvoice(invoice);
-                        setShowInvoiceModal(true);
-                      }}
-                      className="p-1 text-purple-500 hover:bg-purple-50 rounded"
-                      title="Ver Factura"
-                    >
-                      <File size={16} />
-                    </button>
                   </div>
                 </td>
               </tr>
@@ -166,46 +195,79 @@ export const InvoiceHistory: React.FC = () => {
         </table>
       </div>
 
-      {showCancellationModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-          <div className="bg-white p-6 rounded-lg max-w-md w-full">
-            <h3 className="text-lg font-semibold mb-4">Cancelar Factura</h3>
-            <textarea
-              value={cancellationReason}
-              onChange={(e) => setCancellationReason(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500 mb-4"
-              rows={3}
-              placeholder="Razón de cancelación..."
-            />
-            <div className="flex justify-end gap-2">
-              <button
-                onClick={resetModals}
-                className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-md"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={handleCancelInvoice}
-                className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600"
-              >
-                Confirmar
-              </button>
+      {/* View Invoice Modal */}
+      {isViewModalOpen && selectedInvoice && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-4">
+              <InvoiceView invoice={selectedInvoice} />
+              <div className="mt-4 flex justify-end">
+                <button
+                  onClick={() => {
+                    setIsViewModalOpen(false);
+                    setSelectedInvoice(null);
+                  }}
+                  className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
+                >
+                  Cerrar
+                </button>
+              </div>
             </div>
           </div>
         </div>
       )}
 
-      {showInvoiceModal && selectedInvoice && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-          <div className="bg-white p-6 rounded-lg max-w-2xl w-full">
-            <Invoice invoice={selectedInvoice} />
-            <div className="flex justify-end mt-4">
-              <button
-                onClick={() => setShowInvoiceModal(false)}
-                className="px-4 py-2 bg-purple-500 text-white rounded-md hover:bg-purple-600"
-              >
-                Cerrar
-              </button>
+      {/* Edit Invoice Modal */}
+      {isEditModalOpen && selectedInvoice && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-4">
+              <InvoiceEdit
+                invoice={selectedInvoice}
+                onSave={async () => {
+                  await fetchInvoices();
+                  setIsEditModalOpen(false);
+                  setSelectedInvoice(null);
+                }}
+                onCancel={() => {
+                  setIsEditModalOpen(false);
+                  setSelectedInvoice(null);
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Cancel Invoice Modal */}
+      {isCancelModalOpen && selectedInvoice && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-lg w-full">
+            <div className="p-6">
+              <h3 className="text-xl font-semibold mb-4">Cancelar Factura</h3>
+              <p className="mb-4">
+                ¿Está seguro que desea cancelar la factura #{selectedInvoice.id}?
+              </p>
+              <textarea
+                className="w-full p-2 border border-gray-300 rounded mb-4"
+                placeholder="Ingrese el motivo de cancelación"
+                value={cancellationReason}
+                onChange={(e) => setCancellationReason(e.target.value)}
+              />
+              <div className="flex justify-end gap-2">
+                <button
+                  onClick={handleConfirmCancel}
+                  className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+                >
+                  Confirmar
+                </button>
+                <button
+                  onClick={() => setIsCancelModalOpen(false)}
+                  className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
+                >
+                  Cancelar
+                </button>
+              </div>
             </div>
           </div>
         </div>

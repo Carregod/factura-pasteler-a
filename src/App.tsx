@@ -1,3 +1,4 @@
+// Importaciones necesarias
 import React, { useState } from 'react';
 import { Cake, History } from 'lucide-react';
 import { ProductList } from './components/ProductList';
@@ -8,13 +9,45 @@ import { InvoiceHistory } from './components/InvoiceHistory';
 import { Product, InvoiceItem, Invoice as InvoiceType } from './types';
 import { saveInvoice } from './services/api';
 
+// Componente principal de la aplicación
 function App() {
   const [items, setItems] = useState<InvoiceItem[]>([]);
   const [customerName, setCustomerName] = useState('');
   const [customerNIT, setCustomerNIT] = useState('');
   const [currentInvoice, setCurrentInvoice] = useState<InvoiceType | null>(null);
+  const [invoiceComments, setInvoiceComments] = useState('');
   const [showHistory, setShowHistory] = useState(false);
 
+  // Maneja los comentarios al generar la factura
+  const handleCheckout = (comment: string, status: string): void => {
+    if (!comment) {
+      setInvoiceComments('N/A'); // Si no hay comentarios, se asigna un valor por defecto
+    } else {
+      setInvoiceComments(comment); // Se establece el comentario proporcionado
+    }
+  
+    // Manejo de estados
+    switch (status) {
+      case 'completed':
+        console.log('El proceso de facturación se ha completado.');
+        break;
+      case 'partial':
+        console.log('El proceso de facturación está parcialmente completo.');
+        break;
+      case 'pending':
+        console.log('El proceso de facturación está pendiente.');
+        break;
+      default:
+        console.log('Estado desconocido.');
+        break;
+    }
+  };
+  
+
+  
+
+  
+  // Agrega un producto al carrito
   const handleAddProduct = (product: Product) => {
     const existingIndex = items.findIndex(
       (item) => item.product.id === product.id
@@ -29,19 +62,23 @@ function App() {
     }
   };
 
+  // Actualiza la cantidad de un producto
   const handleUpdateQuantity = (index: number, newQuantity: number) => {
+    if (newQuantity < 1) return; // Evita cantidades negativas o cero
     const newItems = [...items];
     newItems[index].quantity = newQuantity;
     setItems(newItems);
   };
 
+  // Elimina un producto del carrito
   const handleRemoveItem = (index: number) => {
     setItems(items.filter((_, i) => i !== index));
   };
 
+  // Genera una factura
   const handleGenerateInvoice = async () => {
-    if (!customerName || !customerNIT || items.length === 0) {
-      alert('Por favor complete los datos del cliente y agregue productos');
+    if (!customerName.trim() || !customerNIT.trim() || items.length === 0) {
+      alert('Por favor complete los datos del cliente y agregue productos.');
       return;
     }
 
@@ -57,6 +94,9 @@ function App() {
       total,
       customerName,
       customerNIT,
+      comment: invoiceComments,
+      status: 'pending',
+      cancellationReason: ''
     };
 
     try {
@@ -68,10 +108,12 @@ function App() {
     }
   };
 
+  // Reinicia el formulario para una nueva factura
   const handleNewInvoice = () => {
     setItems([]);
     setCustomerName('');
     setCustomerNIT('');
+    setInvoiceComments('');
     setCurrentInvoice(null);
     setShowHistory(false);
   };
@@ -127,6 +169,7 @@ function App() {
                 items={items}
                 onUpdateQuantity={handleUpdateQuantity}
                 onRemoveItem={handleRemoveItem}
+                onCheckout={handleCheckout}
               />
               {items.length > 0 && (
                 <button

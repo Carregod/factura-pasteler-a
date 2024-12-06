@@ -44,17 +44,30 @@ app.get('/api/invoices', async (req, res) => {
 // Create new invoice
 app.post('/api/invoices', async (req, res) => {
   try {
-    const invoice = new Invoice({
-      ...req.body,
+    const lastInvoice = await Invoice.findOne().sort({ createdAt: -1 }); // Última factura creada
+    const lastId = lastInvoice?.id || "pasvilla00";
+    const match = lastId.match(/(\d+)$/);
+    const newNumber = match ? parseInt(match[1]) + 1 : 1;
+    const newId = `pasvilla${newNumber.toString().padStart(2, '0')}`;
+
+    const newInvoice = new Invoice({
+      id: newId, // Genera el ID aquí
+      date: new Date(),
+      items: req.body.items,
+      total: req.body.total,
+      customerName: req.body.customerName,
+      customerNIT: req.body.customerNIT,
       status: 'pending',
-      lastModified: new Date()
+      comment: req.body.comment || '' // Incluye el comentario
     });
-    const savedInvoice = await invoice.save();
-    res.status(201).json(savedInvoice);
+
+    await newInvoice.save();
+    res.status(201).json(newInvoice);
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    res.status(500).json({ message: error.message });
   }
 });
+
 
 // Update invoice status
 app.patch('/api/invoices/:id/status', async (req, res) => {
