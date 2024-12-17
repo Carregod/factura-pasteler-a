@@ -70,7 +70,7 @@ export const InvoiceHistory: React.FC = () => {
       await updateInvoiceStatus(invoice.id, 'completed');
       await fetchInvoices();
     } catch (error) {
-      console.error('Error completing invoice:', error);
+      console.error('Error partial invoice:', error);
       alert('Error al finalizar la factura');
     }
   };
@@ -174,7 +174,7 @@ export const InvoiceHistory: React.FC = () => {
                         <button
                           onClick={() => handleCompleteInvoice(invoice)}
                           className="p-1 text-green-600 hover:text-green-900 hover:bg-green-100 rounded"
-                          title="Finalizar Factura"
+                          title="abonar Factura"
                         >
                           <CheckCircle size={18} />
                         </button>

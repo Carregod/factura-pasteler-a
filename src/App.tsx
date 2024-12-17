@@ -16,37 +16,21 @@ function App() {
   const [customerNIT, setCustomerNIT] = useState('');
   const [currentInvoice, setCurrentInvoice] = useState<InvoiceType | null>(null);
   const [invoiceComments, setInvoiceComments] = useState('');
+  const [checkoutStatus, setCheckoutStatus] = useState<'pending' | 'partial' | null>(null);
+  const [partialPayment, setPartialPayment] = useState<number | null>(null);
   const [showHistory, setShowHistory] = useState(false);
 
-  // Maneja los comentarios al generar la factura
-  const handleCheckout = (comment: string, status: string): void => {
-    if (!comment) {
-      setInvoiceComments('N/A'); // Si no hay comentarios, se asigna un valor por defecto
-    } else {
-      setInvoiceComments(comment); // Se establece el comentario proporcionado
-    }
-  
-    // Manejo de estados
-    switch (status) {
-      case 'completed':
-        console.log('El proceso de facturación se ha completado.');
-        break;
-      case 'partial':
-        console.log('El proceso de facturación está parcialmente completo.');
-        break;
-      case 'pending':
-        console.log('El proceso de facturación está pendiente.');
-        break;
-      default:
-        console.log('Estado desconocido.');
-        break;
-    }
+  // Maneja los comentarios y el estado al generar la factura
+  const handleCheckout = (
+    status: 'pending' | 'partial',
+    data: { comments: string; partialPayment?: number }
+  ): void => {
+    setInvoiceComments(data.comments || 'N/A');
+    setCheckoutStatus(status);
+    setPartialPayment(data.partialPayment || null);
+    console.log(`Estado de facturación: ${status}`);
   };
-  
 
-  
-
-  
   // Agrega un producto al carrito
   const handleAddProduct = (product: Product) => {
     const existingIndex = items.findIndex(
@@ -82,6 +66,16 @@ function App() {
       return;
     }
 
+    if (!checkoutStatus) {
+      alert('Por favor seleccione una opción de facturación (En Espera o Abonar).');
+      return;
+    }
+
+    if (checkoutStatus === 'partial' && (partialPayment === null || partialPayment <= 0)) {
+      alert('Por favor ingrese un monto de abono válido.');
+      return;
+    }
+
     const total = items.reduce(
       (sum, item) => sum + item.product.price * item.quantity,
       0
@@ -95,8 +89,9 @@ function App() {
       customerName,
       customerNIT,
       comment: invoiceComments,
-      status: 'pending',
-      cancellationReason: ''
+      status: checkoutStatus,
+      cancellationReason: '',
+      partialPayment: partialPayment || undefined, // Asegura que solo se incluya si existe
     };
 
     try {
@@ -114,6 +109,8 @@ function App() {
     setCustomerName('');
     setCustomerNIT('');
     setInvoiceComments('');
+    setCheckoutStatus(null);
+    setPartialPayment(null);
     setCurrentInvoice(null);
     setShowHistory(false);
   };

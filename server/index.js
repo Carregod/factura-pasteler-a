@@ -57,7 +57,8 @@ app.post('/api/invoices', async (req, res) => {
       total: req.body.total,
       customerName: req.body.customerName,
       customerNIT: req.body.customerNIT,
-      status: 'pending',
+      status: req.body.status,
+      partialPayment:req.body.partialPayment,
       comment: req.body.comment || '' // Incluye el comentario
     });
 
