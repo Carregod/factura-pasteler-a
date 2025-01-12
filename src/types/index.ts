@@ -30,7 +30,6 @@ export interface Invoice {
   total: number;
   customerName: string;
   customerNIT: string;
-  customerPhone: string;
   status: InvoiceStatus;
   partialPayment?: number;
   cancellationReason?: string;
