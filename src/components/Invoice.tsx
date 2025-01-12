@@ -3,6 +3,7 @@ import React from 'react'; // Biblioteca React para construir componentes
 import QRCode from 'qrcode.react'; // Componente para generar un código QR
 import { format } from 'date-fns'; // Biblioteca para formatear fechas
 import { Invoice as InvoiceType } from '../types'; // Tipo definido para garantizar la estructura de una factura
+// import { calculateItemPrice } from '../utils/invoice';
 
 // Definición de las propiedades que recibe el componente
 interface InvoiceProps {
@@ -11,80 +12,84 @@ interface InvoiceProps {
 
 // Componente principal para mostrar una factura
 export const Invoice: React.FC<InvoiceProps> = ({ invoice }) => {
-  // Datos que se codificarán en el código QR
+  // const total = invoice.items.reduce(
+  //   (sum, item) => sum + calculateItemPrice(item),
+  //   0
+  // );
+
   const qrData = JSON.stringify({
-    id: invoice.id, // ID de la factura
-    date: invoice.date, // Fecha de emisión
-    total: invoice.total, // Total de la factura
-    customer: invoice.customerName, // Nombre del cliente
-    nit: invoice.customerNIT, // NIT del cliente
+    id: invoice.id,
+    date: invoice.date,
+    total: invoice.total,
+    customer: invoice.customerName,
+    nit: invoice.customerNIT,
     status: invoice.status,
     partialPayment: invoice.partialPayment,
   });
-  const remainingBalance = invoice.partialPayment 
-  ? invoice.total - invoice.partialPayment 
-  : 0;
 
-  // Renderiza la factura
+  const remainingBalance = invoice.partialPayment
+    ? invoice.total - invoice.partialPayment
+    : 0;
+
   return (
     <div className="bg-white p-8 rounded-lg shadow-md">
       {/* Encabezado de la factura */}
       <div className="text-center mb-6">
-        <h1 className="text-2xl font-bold">Pastelería Delicias</h1> {/* Nombre de la empresa */}
-        <p className="text-gray-600">Factura #{invoice.id}</p> {/* Número de factura */}
+        <h1 className="text-2xl font-bold">Pastelería Delicias</h1>
+        <p className="text-gray-600">Factura #{invoice.id}</p>
         <p className="text-gray-600">
-          {format(new Date(invoice.date), 'dd/MM/yyyy HH:mm')} {/* Fecha formateada */}
+          {format(new Date(invoice.date), 'dd/MM/yyyy HH:mm')}
         </p>
       </div>
 
       {/* Información del cliente */}
       <div className="mb-6">
         <h2 className="font-semibold">Cliente:</h2>
-        <p>{invoice.customerName}</p> {/* Nombre del cliente */}
-        <p>NIT: {invoice.customerNIT}</p> {/* NIT del cliente */}
+        <p>{invoice.customerName}</p>
+        <p>NIT: {invoice.customerNIT}</p>
       </div>
 
       {/* Tabla con detalles de los productos */}
       <table className="w-full mb-6">
         <thead>
           <tr className="border-b">
-            {/* Encabezados de la tabla */}
             <th className="text-left py-2">Producto</th>
+            <th className="text-right py-2">Porciones</th>
             <th className="text-right py-2">Cantidad</th>
-            <th className="text-right py-2">Precio</th>
+            <th className="text-right py-2">Precio Unitario</th>
             <th className="text-right py-2">Subtotal</th>
           </tr>
         </thead>
         <tbody>
-          {/* Detalles de cada producto */}
-          {invoice.items.map((item, index) => (
-            <tr key={index} className="border-b">
-              <td className="py-2">{item.product.name}</td> {/* Nombre del producto */}
-              <td className="text-right py-2">{item.quantity}</td> {/* Cantidad */}
-              <td className="text-right py-2">
-                Q{item.product.price.toFixed(2)} {/* Precio unitario */}
-              </td>
-              <td className="text-right py-2">
-                Q{(item.product.price * item.quantity).toFixed(2)} {/* Subtotal */}
-              </td>
-            </tr>
-          ))}
+          {invoice.items.map((item, index) => {
+            // const pricePerUnit = item.portions * item.product.portionPrice;
+            // const subtotal = calculateItemPrice(item);
+
+            return (
+              <tr key={index} className="border-b">
+                <td className="py-2">{item.product.name}</td>
+                <td className="text-right py-2">{item.portions}</td>
+                <td className="text-right py-2">{item.quantity}</td>
+                <td className="text-right py-2">Q{item.unitPrice?.toFixed(2)}</td>
+                <td className="text-right py-2">Q{item.subtotal?.toFixed(2)}</td>
+             
+              </tr>
+            );
+          })}
         </tbody>
         <tfoot>
-          {/* Total general de la factura */}
           <tr>
-            <td colSpan={3} className="text-right font-semibold py-2">
+            <td colSpan={4} className="text-right font-semibold py-2">
               Total:
             </td>
             <td className="text-right font-semibold py-2">
               Q{invoice.total.toFixed(2)}
             </td>
           </tr>
-          {/* Si existe un abono parcial, se muestra */}
           {invoice.partialPayment && (
             <>
               <tr>
-                <td colSpan={3} className="text-right py-2">
+                <td colSpan={4} className="text-right py-2">
                   Abono:
                 </td>
                 <td className="text-right py-2 text-green-600">
@@ -92,7 +97,7 @@ export const Invoice: React.FC<InvoiceProps> = ({ invoice }) => {
                 </td>
               </tr>
               <tr>
-                <td colSpan={3} className="text-right py-2">
+                <td colSpan={4} className="text-right py-2">
                   Saldo pendiente:
                 </td>
                 <td className="text-right py-2 text-red-600">
@@ -100,7 +105,6 @@ export const Invoice: React.FC<InvoiceProps> = ({ invoice }) => {
                 </td>
               </tr>
             </>
-            
           )}
         </tfoot>
       </table>
@@ -109,31 +113,38 @@ export const Invoice: React.FC<InvoiceProps> = ({ invoice }) => {
       {invoice.comment && (
         <div className="mb-6 p-4 bg-gray-50 rounded-md">
           <h3 className="font-semibold mb-2">Comentarios:</h3>
-          <p className="text-gray-700">{invoice.comment}</p> {/* Muestra los comentarios */}
+          <p className="text-gray-700">{invoice.comment}</p>
         </div>
       )}
 
-<div className="mb-4 text-center">
-        <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${
-          invoice.status === 'completed' ? 'bg-green-100 text-green-800' :
-          invoice.status === 'partial' ? 'bg-yellow-100 text-yellow-800' :
-          'bg-gray-100 text-gray-800'
-        }`}>
-          {invoice.status === 'completed' ? 'Pagado' :
-           invoice.status === 'partial' ? 'Abonado' :
-           'Pendiente'}
+      <div className="mb-4 text-center">
+        <span
+          className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${
+            invoice.status === 'completed'
+              ? 'bg-green-100 text-green-800'
+              : invoice.status === 'partial'
+              ? 'bg-yellow-100 text-yellow-800'
+              : 'bg-gray-100 text-gray-800'
+          }`}
+        >
+          {invoice.status === 'completed'
+            ? 'Pagado'
+            : invoice.status === 'partial'
+            ? 'Abonado'
+            : 'Pendiente'}
         </span>
       </div>
+
       {/* Código QR */}
       <div className="flex justify-center mb-4">
-        <QRCode value={qrData} size={128} /> {/* Genera el QR con los datos de la factura */}
+        <QRCode value={qrData} size={128} />
       </div>
 
       {/* Pie de página */}
       <div className="text-center text-sm text-gray-600">
-        <p>¡Gracias por su compra!</p> {/* Mensaje de agradecimiento */}
-        <p>Pastelería Delicias - Tel: (502) 2222-3333</p> {/* Información de contacto */}
-        <p>Ciudad de Guatemala, Guatemala</p> {/* Ubicación */}
+        <p>¡Gracias por su compra!</p>
+        <p>Pastelería Delicias - Tel: (502) 2222-3333</p>
+        <p>Ciudad de Guatemala, Guatemala</p>
       </div>
     </div>
   );
@@ -141,24 +152,30 @@ export const Invoice: React.FC<InvoiceProps> = ({ invoice }) => {
 
 
 
+
+
 // import React from 'react';
 // import QRCode from 'qrcode.react';
 // import { format } from 'date-fns';
-// import { MessageSquare } from 'lucide-react';
 // import { Invoice as InvoiceType } from '../types';
+// import { calculateItemPrice } from '../utils/invoice';
 
 // interface InvoiceProps {
 //   invoice: InvoiceType;
 // }
 
 // export const Invoice: React.FC<InvoiceProps> = ({ invoice }) => {
+//   const total = invoice.items.reduce(
+//     (sum, item) => sum + calculateItemPrice(item),
+//     0
+//   );
 //   const qrData = JSON.stringify({
 //     id: invoice.id,
 //     date: invoice.date,
-//     total: invoice.total,
+//     total,
 //     customer: invoice.customerName,
 //     nit: invoice.customerNIT,
-//     comment: invoice.comment,
+//     status: invoice.status,
 //   });
 
 //   return (
@@ -181,46 +198,51 @@ export const Invoice: React.FC<InvoiceProps> = ({ invoice }) => {
 //         <thead>
 //           <tr className="border-b">
 //             <th className="text-left py-2">Producto</th>
+//             <th className="text-right py-2">Porciones</th>
 //             <th className="text-right py-2">Cantidad</th>
-//             <th className="text-right py-2">Precio</th>
+//             <th className="text-right py-2">Precio Unitario</th>
 //             <th className="text-right py-2">Subtotal</th>
 //           </tr>
 //         </thead>
 //         <tbody>
-//           {invoice.items.map((item, index) => (
-//             <tr key={index} className="border-b">
-//               <td className="py-2">{item.product.name}</td>
-//               <td className="text-right py-2">{item.quantity}</td>
-//               <td className="text-right py-2">
-//                 Q{item.product.price.toFixed(2)}
-//               </td>
-//               <td className="text-right py-2">
-//                 Q{(item.product.price * item.quantity).toFixed(2)}
-//               </td>
-//             </tr>
-//           ))}
+//           {invoice.items.map((item, index) => {
+//             const pricePerUnit = (item.portions * item.product.portionPrice);
+//             const subtotal = calculateItemPrice(item);
+            
+//             return (
+//               <tr key={index} className="border-b">
+//                 <td className="py-2">{item.product.name}</td>
+//                 <td className="text-right py-2">{item.portions}</td>
+//                 <td className="text-right py-2">{item.quantity}</td>
+//                 <td className="text-right py-2">Q{pricePerUnit.toFixed(2)}</td>
+//                 <td className="text-right py-2">Q{subtotal.toFixed(2)}</td>
+//               </tr>
+//             );
+//           })}
 //         </tbody>
 //         <tfoot>
 //           <tr>
-//             <td colSpan={3} className="text-right font-semibold py-2">
+//             <td colSpan={4} className="text-right font-semibold py-2">
 //               Total:
 //             </td>
 //             <td className="text-right font-semibold py-2">
-//               Q{invoice.total.toFixed(2)}
+//               Q{total.toFixed(2)}
 //             </td>
 //           </tr>
 //         </tfoot>
 //       </table>
 
-//       {invoice.comment && (
-//         <div className="mb-6 p-4 bg-pink-50 rounded-md border border-pink-100">
-//           <div className="flex items-center gap-2 mb-2">
-//             <MessageSquare className="text-pink-500" size={20} />
-//             <h3 className="font-semibold text-pink-900">Comentario:</h3>
-//           </div>
-//           <p className="text-gray-700 pl-7">{invoice.comment}</p>
-//         </div>
-//       )}
+//       <div className="mb-4 text-center">
+//         <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${
+//           invoice.status === 'completed' ? 'bg-green-100 text-green-800' :
+//           invoice.status === 'partial' ? 'bg-yellow-100 text-yellow-800' :
+//           'bg-gray-100 text-gray-800'
+//         }`}>
+//           {invoice.status === 'completed' ? 'Pagado' :
+//            invoice.status === 'partial' ? 'Abono Pendiente' :
+//            'Pendiente'}
+//         </span>
+//       </div>
 
 //       <div className="flex justify-center mb-4">
 //         <QRCode value={qrData} size={128} />

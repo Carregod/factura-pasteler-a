@@ -44,14 +44,10 @@ app.get('/api/invoices', async (req, res) => {
 // Create new invoice
 app.post('/api/invoices', async (req, res) => {
   try {
-    const lastInvoice = await Invoice.findOne().sort({ createdAt: -1 }); // Última factura creada
-    const lastId = lastInvoice?.id || "pasvilla00";
-    const match = lastId.match(/(\d+)$/);
-    const newNumber = match ? parseInt(match[1]) + 1 : 1;
-    const newId = `pasvilla${newNumber.toString().padStart(2, '0')}`;
+
 
     const newInvoice = new Invoice({
-      id: newId, // Genera el ID aquí
+      id: req.body.id, // Genera el ID aquí
       date: new Date(),
       items: req.body.items,
       total: req.body.total,

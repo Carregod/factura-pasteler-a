@@ -2,9 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { format } from 'date-fns';
 import { MessageSquare, Eye, Edit2, XCircle, CheckCircle } from 'lucide-react';
 import { getInvoices, updateInvoiceStatus } from '../services/api';
-import { Invoice } from '../types'; 
+import { Invoice } from '../types';
 import { InvoiceView } from './InvoiceView';
 import { InvoiceEdit } from './InvoiceEdit';
+
 
 export const InvoiceHistory: React.FC = () => {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
@@ -29,6 +30,10 @@ export const InvoiceHistory: React.FC = () => {
       setLoading(false);
     }
   };
+
+  // const calculateTotal = (invoice: Invoice) => {
+  //   return invoice.items.reduce((sum, item) => sum + calculateItemPrice(item), 0);
+  // };
 
   const handleViewInvoice = (invoice: Invoice) => {
     setSelectedInvoice(invoice);
@@ -70,7 +75,7 @@ export const InvoiceHistory: React.FC = () => {
       await updateInvoiceStatus(invoice.id, 'completed');
       await fetchInvoices();
     } catch (error) {
-      console.error('Error partial invoice:', error);
+      console.error('Error completing invoice:', error);
       alert('Error al finalizar la factura');
     }
   };
@@ -118,84 +123,88 @@ export const InvoiceHistory: React.FC = () => {
               <th className="text-left py-2">Cliente</th>
               <th className="text-left py-2">Fecha</th>
               <th className="text-right py-2">Total</th>
-              <th className="text-left py-2">Estado</th>
+              <th className="text-center py-2">Estado</th>
+              <th className="text-right py-2">Abono</th>
               <th className="text-left py-2">Comentario</th>
               <th className="text-left py-2">Motivo Cancelación</th>
               <th className="text-center py-2">Acciones</th>
             </tr>
           </thead>
           <tbody>
-            {invoices.map((invoice) => (
-              <tr key={invoice.id} className="border-b hover:bg-gray-50">
-                <td className="py-2">{invoice.id}</td>
-                <td className="py-2">{invoice.customerName}</td>
-                <td className="py-2">
-                  {format(new Date(invoice.date), 'dd/MM/yyyy HH:mm')}
-                </td>
-                <td className="py-2 text-right">Q{invoice.total.toFixed(2)}</td>
-                <td className="py-2">
-                  {getStatusBadge(invoice.status)}
-                </td>
-                <td className="py-2">
-                  {invoice.comment && (
-                    <div className="flex items-center gap-1">
-                      <MessageSquare size={16} className="text-gray-500" />
-                      <span className="text-sm text-gray-600 truncate max-w-[200px]">
-                        {invoice.comment}
-                      </span>
-                    </div>
-                  )}
-                </td>
-                <td className="py-2">
-                  {invoice.cancellationReason && (
-                    <span className="text-sm text-red-600 truncate max-w-[200px]">
-                      {invoice.cancellationReason}
-                    </span>
-                  )}
-                </td>
-                <td className="py-2">
-                  <div className="flex justify-center gap-2">
-                    <button
-                      onClick={() => handleViewInvoice(invoice)}
-                      className="p-1 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded"
-                      title="Ver Factura"
-                    >
-                      <Eye size={18} />
-                    </button>
-                    {['pending', 'partial'].includes(invoice.status) && (
-                      <>
-                        <button
-                          onClick={() => handleEditInvoice(invoice)}
-                          className="p-1 text-blue-600 hover:text-blue-900 hover:bg-blue-100 rounded"
-                          title="Editar Factura"
-                        >
-                          <Edit2 size={18} />
-                        </button>
-                        <button
-                          onClick={() => handleCompleteInvoice(invoice)}
-                          className="p-1 text-green-600 hover:text-green-900 hover:bg-green-100 rounded"
-                          title="abonar Factura"
-                        >
-                          <CheckCircle size={18} />
-                        </button>
-                        <button
-                          onClick={() => handleCancelInvoice(invoice)}
-                          className="p-1 text-red-600 hover:text-red-900 hover:bg-red-100 rounded"
-                          title="Cancelar Factura"
-                        >
-                          <XCircle size={18} />
-                        </button>
-                      </>
+            {invoices.map((invoice) => {
+              // const total = calculateTotal(invoice);
+              return (
+                <tr key={invoice.id} className="border-b hover:bg-gray-50">
+                  <td className="py-2">{invoice.id}</td>
+                  <td className="py-2">{invoice.customerName}</td>
+                  <td className="py-2">
+                    {format(new Date(invoice.date), 'dd/MM/yyyy HH:mm')}
+                  </td>
+                  <td className="py-2 text-right">Q{invoice.total.toFixed(2)}</td>
+                  <td className="py-2 text-center">{getStatusBadge(invoice.status)}</td>
+                  <td className="py-2 text-right">
+                    {invoice.partialPayment ? `Q${invoice.partialPayment.toFixed(2)}` : '-'}
+                  </td>
+                  <td className="py-2">
+                    {invoice.comment && (
+                      <div className="flex items-center gap-1">
+                        <MessageSquare size={16} className="text-gray-500" />
+                        <span className="text-sm text-gray-600 truncate max-w-[200px]">
+                          {invoice.comment}
+                        </span>
+                      </div>
                     )}
-                  </div>
-                </td>
-              </tr>
-            ))}
+                  </td>
+                  <td className="py-2">
+                    {invoice.cancellationReason && (
+                      <span className="text-sm text-red-600 truncate max-w-[200px]">
+                        {invoice.cancellationReason}
+                      </span>
+                    )}
+                  </td>
+                  <td className="py-2">
+                    <div className="flex justify-center gap-2">
+                      <button
+                        onClick={() => handleViewInvoice(invoice)}
+                        className="p-1 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded"
+                        title="Ver Factura"
+                      >
+                        <Eye size={18} />
+                      </button>
+                      {['pending', 'partial'].includes(invoice.status) && (
+                        <>
+                          <button
+                            onClick={() => handleEditInvoice(invoice)}
+                            className="p-1 text-blue-600 hover:text-blue-900 hover:bg-blue-100 rounded"
+                            title="Editar Factura"
+                          >
+                            <Edit2 size={18} />
+                          </button>
+                          <button
+                            onClick={() => handleCompleteInvoice(invoice)}
+                            className="p-1 text-green-600 hover:text-green-900 hover:bg-green-100 rounded"
+                            title="Completar Factura"
+                          >
+                            <CheckCircle size={18} />
+                          </button>
+                          <button
+                            onClick={() => handleCancelInvoice(invoice)}
+                            className="p-1 text-red-600 hover:text-red-900 hover:bg-red-100 rounded"
+                            title="Cancelar Factura"
+                          >
+                            <XCircle size={18} />
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
 
-      {/* View Invoice Modal */}
       {isViewModalOpen && selectedInvoice && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
@@ -217,7 +226,6 @@ export const InvoiceHistory: React.FC = () => {
         </div>
       )}
 
-      {/* Edit Invoice Modal */}
       {isEditModalOpen && selectedInvoice && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
@@ -239,7 +247,6 @@ export const InvoiceHistory: React.FC = () => {
         </div>
       )}
 
-      {/* Cancel Invoice Modal */}
       {isCancelModalOpen && selectedInvoice && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-lg shadow-xl max-w-lg w-full">

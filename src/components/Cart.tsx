@@ -90,6 +90,7 @@
 import React, { useState } from 'react'; // React y el hook useState para manejar estados locales
 import { Trash2, Minus, Plus } from 'lucide-react'; // Iconos para las acciones del carrito
 import { InvoiceItem } from '../types'; // Tipo definido para los elementos del carrito
+import { calculateItemPrice } from '../utils/invoice';
 
 // Definición de las propiedades que recibe el componente
 interface CartProps {
@@ -116,7 +117,7 @@ export const Cart: React.FC<CartProps> = ({
 
   // Calcula el total del carrito sumando el precio por cantidad de cada producto
   const total = items.reduce(
-    (sum, item) => sum + item.product.price * item.quantity, // Precio x Cantidad
+    (sum, item) => sum + calculateItemPrice(item), // Precio x Cantidad
     0 // Valor inicial del acumulador
   );
 
@@ -161,7 +162,9 @@ export const Cart: React.FC<CartProps> = ({
                 <div>
                   <h3 className="font-medium">{item.product.name}</h3> {/* Nombre del producto */}
                   <p className="text-gray-600">
-                    Q{item.product.price.toFixed(2)} c/u {/* Precio unitario */}
+                  {item.portions} porciones
+                  Q{((item.portions || 0) * (item.product.portionPrice || 0)).toFixed(2)} c/u {/* Precio unitario */}
+
                   </p>
                 </div>
 
@@ -195,6 +198,9 @@ export const Cart: React.FC<CartProps> = ({
                     <Trash2 size={16} /> {/* Icono de eliminar */}
                   </button>
                 </div>
+                <p className="text-right text-sm font-medium">
+                  Subtotal: Q{calculateItemPrice(item).toFixed(2)}
+                </p>
               </div>
             ))}
           </div>
