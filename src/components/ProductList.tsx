@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState} from 'react';
 import { Plus, Search } from 'lucide-react';
 import { Product } from '../types';
 import { products } from '../data/products';
@@ -195,3 +195,117 @@ export const ProductList: React.FC<ProductListProps> = ({ onAddProduct }) => {
     </div>
   );
 };
+
+// import React, { useState } from 'react';
+// import { Plus } from 'lucide-react';
+// import { Product } from '../types';
+// import { products } from '../data/products';
+
+// interface ProductListProps {
+//   onAddProduct: (product: Product, portions: number) => void;
+// }
+
+// export const ProductList: React.FC<ProductListProps> = ({ onAddProduct }) => {
+//   const [selectedPortions, setSelectedPortions] = useState<{ [key: number]: number }>({});
+
+//   const handlePortionsChange = (productId: number, portions: number) => {
+//     setSelectedPortions((prev) => ({
+//       ...prev,
+//       [productId]: portions,
+//     }));
+//   };
+
+//   const handleAddToCart = (product: Product) => {
+//     const portions = product.hasPortion
+//       ? selectedPortions[product.id] || product.minPortions || 1
+//       : 1;
+//     onAddProduct(product, portions);
+//   };
+
+//   const calculateProductPrice = (product: Product, portions: number): number => {
+//     if (product.hasPortion) {
+//       return portions * (product.portionPrice || 0);
+//     }
+//     return product.price;
+//   };
+
+//   return (
+//     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+//       {products.map((product) => {
+//         const portions = product.hasPortion
+//           ? selectedPortions[product.id] || product.minPortions || 1
+//           : 1;
+//         const price = calculateProductPrice(product, portions);
+
+//         // Crea el rango de opciones del select
+//         const portionOptions =
+//           product.hasPortion && product.minPortions && product.maxPortions
+//             ? Array.from(
+//                 { length: product.maxPortions - product.minPortions + 1 },
+//                 (_, i) => (product.minPortions || 0) + i
+//               )
+//             : [];
+
+//         return (
+//           <div
+//             key={product.id}
+//             className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow"
+//           >
+//             <img
+//               src={product.image}
+//               alt={product.name}
+//               className="w-full h-48 object-cover rounded-md mb-4"
+//             />
+//             <h3 className="text-lg font-semibold mb-2">{product.name}</h3>
+//             <p className="text-gray-600 text-sm mb-2">{product.description}</p>
+
+//             {product.hasPortion ? (
+//               <>
+//                 <p className="text-gray-700 mb-2">
+//                   Precio por porción: Q{product.portionPrice?.toFixed(2) || '0.00'}
+//                 </p>
+//                 <div className="mb-4">
+//                   <label
+//                     htmlFor={`portions-${product.id}`}
+//                     className="block text-sm font-medium text-gray-700 mb-1"
+//                   >
+//                     Número de porciones ({product.minPortions || 0}-{product.maxPortions || 0}):
+//                   </label>
+//                   <select
+//                     id={`portions-${product.id}`}
+//                     aria-label={`Selecciona el número de porciones para ${product.name}`}
+//                     value={portions}
+//                     onChange={(e) => handlePortionsChange(product.id, Number(e.target.value))}
+//                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500"
+//                   >
+//                     {portionOptions.map((portionCount) => (
+//                       <option key={portionCount} value={portionCount}>
+//                         {portionCount} porciones - Q{calculateProductPrice(product, portionCount).toFixed(2)}
+//                       </option>
+//                     ))}
+//                   </select>
+//                 </div>
+//               </>
+//             ) : (
+//               <p className="text-gray-700 mb-2">
+//                 Precio: Q{product.price.toFixed(2)} {product.unit ? `por ${product.unit}` : ''}
+//               </p>
+//             )}
+
+//             <div className="flex justify-between items-center">
+//               <span className="text-lg font-semibold">Total: Q{price.toFixed(2)}</span>
+//               <button
+//                 onClick={() => handleAddToCart(product)}
+//                 className="flex items-center gap-2 bg-pink-500 text-white px-4 py-2 rounded-md hover:bg-pink-600 transition-colors"
+//                 aria-label={`Agregar ${product.name} al carrito`}
+//               >
+//                 <Plus size={16} />
+//                 Agregar
+//               </button>
+//             </div>
+//           </div>
+//         );
+//       })}
+//     </div>
+//   );
+// };

@@ -9,18 +9,17 @@ import { Product, InvoiceItem, Invoice as InvoiceType } from './types';
 import { saveInvoice } from './services/api';
 import { createInvoice } from './utils/invoice';
 
-
 function App() {
   const [items, setItems] = useState<InvoiceItem[]>([]);
   const [customerName, setCustomerName] = useState('');
   const [customerNIT, setCustomerNIT] = useState('');
+  const [customerPhone, setCustomerPhone] = useState(''); // Added phone state
   const [currentInvoice, setCurrentInvoice] = useState<InvoiceType | null>(null);
   const [invoiceComments, setInvoiceComments] = useState('');
   const [checkoutStatus, setCheckoutStatus] = useState<'pending' | 'partial' | null>(null);
   const [partialPayment, setPartialPayment] = useState<number | null>(null);
   const [showHistory, setShowHistory] = useState(false);
 
-//Agrega un producto al carrito
   const handleAddProduct = (product: Product, portions: number) => {
     const existingIndex = items.findIndex(
       (item) => item.product.id === product.id && item.portions === portions
@@ -56,7 +55,7 @@ function App() {
   };
 
   const handleGenerateInvoice = async () => {
-    if (!customerName.trim() || !customerNIT.trim() || items.length === 0) {
+    if (!customerName.trim() || !customerNIT.trim() || !customerPhone.trim() || items.length === 0) {
       alert('Por favor complete los datos del cliente y agregue productos.');
       return;
     }
@@ -71,30 +70,16 @@ function App() {
       return;
     }
 
-
-    const invoice: InvoiceType = createInvoice(
+    const invoice = createInvoice(
       items,
       customerName,
       customerNIT,
+      customerPhone,
       checkoutStatus,
-      invoiceComments, // Para los comentarios de la factura
-      partialPayment || null // Si no hay abono, se pasa null
+      invoiceComments,
+      partialPayment || null
     );
     
-
-    //   const invoice: InvoiceType = {
-    //   id: Math.random().toString(36).substr(2, 9),
-    //   date: new Date(),
-    //   items: [...items],
-    //   total,
-    //   customerName,
-    //   customerNIT,
-    //   comment: invoiceComments,
-    //   status: checkoutStatus,
-    //   cancellationReason: '',
-    //   partialPayment: partialPayment || undefined, // Asegura que solo se incluya si existe
-    // };    
-
     try {
       await saveInvoice(invoice);
       setCurrentInvoice(invoice);
@@ -108,6 +93,7 @@ function App() {
     setItems([]);
     setCustomerName('');
     setCustomerNIT('');
+    setCustomerPhone('');
     setInvoiceComments('');
     setCheckoutStatus(null);
     setPartialPayment(null);
@@ -158,6 +144,8 @@ function App() {
                 setCustomerName={setCustomerName}
                 customerNIT={customerNIT}
                 setCustomerNIT={setCustomerNIT}
+                customerPhone={customerPhone}
+                setCustomerPhone={setCustomerPhone}
               />
               <ProductList onAddProduct={handleAddProduct} />
             </div>

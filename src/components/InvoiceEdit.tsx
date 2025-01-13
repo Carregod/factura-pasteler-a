@@ -15,6 +15,7 @@ export const InvoiceEdit: React.FC<InvoiceEditProps> = ({
 }) => {
   const [customerName, setCustomerName] = useState(invoice.customerName);
   const [customerNIT, setCustomerNIT] = useState(invoice.customerNIT);
+  const [customerPhone, setCustomerPhone] = useState(invoice.customerPhone);
   const [comment, setComment] = useState(invoice.comment || '');
   const [partialPayment, setPartialPayment] = useState(
     invoice.partialPayment || 0
@@ -25,6 +26,7 @@ export const InvoiceEdit: React.FC<InvoiceEditProps> = ({
       await updateInvoice(invoice.id, {
         customerName,
         customerNIT,
+        customerPhone,
         comment,
         partialPayment: partialPayment || undefined,
       });
@@ -59,6 +61,18 @@ export const InvoiceEdit: React.FC<InvoiceEditProps> = ({
           type="text"
           value={customerNIT}
           onChange={(e) => setCustomerNIT(e.target.value)}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500"
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Teléfono
+        </label>
+        <input
+          type="tel"
+          value={customerPhone}
+          onChange={(e) => setCustomerPhone(e.target.value)}
           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500"
         />
       </div>

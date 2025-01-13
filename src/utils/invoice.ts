@@ -16,13 +16,14 @@ export const calculateItemPrice = (item: InvoiceItem): number => {
 };
 
 export const calculateTotal = (items: InvoiceItem[]): number => {
-  return items.reduce((sum, item) => sum + calculateItemPrice(item), 0);
+  return items.reduce((sum, item) => sum + calculateItemPrice(item), 0);   
 };
 
 export const createInvoice = (
   items: InvoiceItem[],
   customerName: string,
   customerNIT: string,
+  customerPhone: string,
   status: InvoiceStatus,
   invoiceComments: string, // Para los comentarios de la factura
   partialPayment: number | null // Para los abonos parciales
@@ -47,6 +48,7 @@ export const createInvoice = (
     total,
     customerName,
     customerNIT,
+    customerPhone,
     comment: invoiceComments,  // Agregar comentarios
     status,  // Estado de la factura
     cancellationReason: '',  // Razón de cancelación si existe

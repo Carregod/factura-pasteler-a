@@ -140,6 +140,10 @@ const invoiceSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  customerPhone: {  // Added phone field
+    type: String,
+    required: true
+  },
   status: {
     type: String,
     enum: ['pending', 'partial', 'completed', 'cancelled'],

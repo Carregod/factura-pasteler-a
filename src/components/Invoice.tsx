@@ -10,19 +10,15 @@ interface InvoiceProps {
   invoice: InvoiceType; // Factura que se va a renderizar
 }
 
-// Componente principal para mostrar una factura
-export const Invoice: React.FC<InvoiceProps> = ({ invoice }) => {
-  // const total = invoice.items.reduce(
-  //   (sum, item) => sum + calculateItemPrice(item),
-  //   0
-  // );
 
+export const Invoice: React.FC<InvoiceProps> = ({ invoice }) => {
   const qrData = JSON.stringify({
     id: invoice.id,
     date: invoice.date,
     total: invoice.total,
     customer: invoice.customerName,
     nit: invoice.customerNIT,
+    phone: invoice.customerPhone,
     status: invoice.status,
     partialPayment: invoice.partialPayment,
   });
@@ -46,6 +42,7 @@ export const Invoice: React.FC<InvoiceProps> = ({ invoice }) => {
       <div className="mb-6">
         <h2 className="font-semibold">Cliente:</h2>
         <p>{invoice.customerName}</p>
+        <p>Teléfono: {invoice.customerPhone}</p>
         <p>NIT: {invoice.customerNIT}</p>
       </div>
 
@@ -77,36 +74,37 @@ export const Invoice: React.FC<InvoiceProps> = ({ invoice }) => {
             );
           })}
         </tbody>
-        <tfoot>
-          <tr>
-            <td colSpan={4} className="text-right font-semibold py-2">
-              Total:
-            </td>
-            <td className="text-right font-semibold py-2">
-              Q{invoice.total.toFixed(2)}
-            </td>
-          </tr>
-          {invoice.partialPayment && (
-            <>
-              <tr>
-                <td colSpan={4} className="text-right py-2">
-                  Abono:
-                </td>
-                <td className="text-right py-2 text-green-600">
-                  Q{invoice.partialPayment.toFixed(2)}
-                </td>
-              </tr>
-              <tr>
-                <td colSpan={4} className="text-right py-2">
-                  Saldo pendiente:
-                </td>
-                <td className="text-right py-2 text-red-600">
-                  Q{remainingBalance.toFixed(2)}
-                </td>
-              </tr>
-            </>
-          )}
-        </tfoot>
+       <tfoot>
+  <tr>
+    <td colSpan={4} className="text-right font-semibold py-2">
+      Total:
+    </td>
+    <td className="text-right font-semibold py-2">
+      Q{invoice.total.toFixed(2)}
+    </td>
+  </tr>
+  {invoice.partialPayment && (
+    <>
+      <tr>
+        <td colSpan={4} className="text-right py-2">
+          Abono:
+        </td>
+        <td className="text-right py-2 text-green-600">
+          Q{invoice.partialPayment.toFixed(2)}
+        </td>
+      </tr>
+      <tr>
+        <td colSpan={4} className="text-right py-2">
+          Saldo pendiente:
+        </td>
+        <td className="text-right py-2 text-red-600">
+          Q{remainingBalance.toFixed(2)}
+        </td>
+      </tr>
+    </>
+  )}
+</tfoot>
+
       </table>
 
       {/* Comentarios adicionales, si existen */}
